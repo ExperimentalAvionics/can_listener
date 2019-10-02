@@ -29,10 +29,14 @@ cursor.execute('''PRAGMA journal_mode=WAL''')
 cursor.execute('''INSERT OR REPLACE  INTO messages(CANid, Param_Text, Param_Value, timestamp) VALUES(?,?,?,?)''', (40, "Airspeed", 0, time.time() ))
 cursor.execute('''INSERT OR REPLACE  INTO messages(CANid, Param_Text, Param_Value, timestamp) VALUES(?,?,?,?)''', (40, "Altitude", 0, time.time() ))
 cursor.execute('''INSERT OR REPLACE  INTO messages(CANid, Param_Text, Param_Value, timestamp) VALUES(?,?,?,?)''', (40, "VerticalSpeed", 0, time.time() ))
-cursor.execute('''INSERT OR REPLACE  INTO messages(CANid, Param_Text, Param_Value, timestamp) VALUES(?,?,?,?)''', (40, "AoA", 0, time.time() ))
+#Msg. 41 from Module A (Angle of Attack)
+cursor.execute('''INSERT OR REPLACE  INTO messages(CANid, Param_Text, Param_Value, timestamp) VALUES(?,?,?,?)''', (41, "AoA", 0, time.time() ))
 #Msg. 42 Outside Air Temperature, and Humidity
-cursor.execute('''INSERT OR REPLACE  INTO messages(CANid, Param_Text, Param_Value, timestamp) VALUES(?,?,?,?)''', (40, "OAT", 0, time.time() ))
-cursor.execute('''INSERT OR REPLACE  INTO messages(CANid, Param_Text, Param_Value, timestamp) VALUES(?,?,?,?)''', (40, "Humidity", 0, time.time() ))
+cursor.execute('''INSERT OR REPLACE  INTO messages(CANid, Param_Text, Param_Value, timestamp) VALUES(?,?,?,?)''', (42, "OAT", 0, time.time() ))
+cursor.execute('''INSERT OR REPLACE  INTO messages(CANid, Param_Text, Param_Value, timestamp) VALUES(?,?,?,?)''', (42, "Humidity", 0, time.time() ))
+#Msg. 43 from Module A (Raw Statick pressure and the sensor's temperature)
+cursor.execute('''INSERT OR REPLACE  INTO messages(CANid, Param_Text, Param_Value, timestamp) VALUES(?,?,?,?)''', (43, "RawStaticPressure", 0, time.time() ))
+cursor.execute('''INSERT OR REPLACE  INTO messages(CANid, Param_Text, Param_Value, timestamp) VALUES(?,?,?,?)''', (43, "RawSensorTemperature", 0, time.time() ))
 #Msg. 46 QNH
 cursor.execute('''INSERT OR REPLACE  INTO messages(CANid, Param_Text, Param_Value, timestamp) VALUES(?,?,?,?)''', (46, "QNH", 0, time.time() ))
 #Msg. 50 Engine stuff
@@ -125,15 +129,21 @@ try:
 			if VerticalSpeed > 32768:
 				VerticalSpeed = VerticalSpeed - 65536
 			cursor.execute('''UPDATE messages SET Param_Value=?, timestamp=? WHERE CANid=? and Param_Text=?''', (VerticalSpeed, message.timestamp, CANid, "VerticalSpeed"))
-			cursor.execute('''UPDATE messages SET Param_Value=?, timestamp=? WHERE CANid=? and Param_Text=?''', ( message.data[7], 	message.timestamp, CANid, "AoA"))
+			memdb.commit()
+		elif CANid == 41:
+			cursor.execute('''UPDATE messages SET Param_Value=?, timestamp=? WHERE CANid=? and Param_Text=?''', ((message.data[0])|(message.data[1]<<8),  message.timestamp, CANid, "AoA"))
 			memdb.commit()
 		elif CANid == 42:
-			cursor.execute('''UPDATE messages SET Param_Value=?, timestamp=? WHERE CANid=? and Param_Text=?''', (message.data[0], message.timestamp, CANid, "OAT"))
-			cursor.execute('''UPDATE messages SET Param_Value=?, timestamp=? WHERE CANid=? and Param_Text=?''', (message.data[1], message.timestamp, CANid, "Humidity"))
+			cursor.execute('''UPDATE messages SET Param_Value=?, timestamp=? WHERE CANid=? and Param_Text=?''', ((message.data[0])|(message.data[1]<<8), message.timestamp, CANid, "OAT"))
+			cursor.execute('''UPDATE messages SET Param_Value=?, timestamp=? WHERE CANid=? and Param_Text=?''', (message.data[2], message.timestamp, CANid, "Humidity"))
+			memdb.commit()
+		elif CANid == 43:
+			cursor.execute('''UPDATE messages SET Param_Value=?, timestamp=? WHERE CANid=? and Param_Text=?''', ((message.data[0])|(message.data[1]<<8), message.timestamp, CANid, "RawStaticPressure"))
+			cursor.execute('''UPDATE messages SET Param_Value=?, timestamp=? WHERE CANid=? and Param_Text=?''', (message.data[2], message.timestamp, CANid, "RawSensorTemperature"))
 			memdb.commit()
 		elif CANid == 46:
-                        cursor.execute('''UPDATE messages SET Param_Value=?, timestamp=? WHERE CANid=? and Param_Text=?''', ((message.data[0])|(message.data[1]<<8), message.timestamp, CANid, "QNH"))
-                        memdb.commit()
+			cursor.execute('''UPDATE messages SET Param_Value=?, timestamp=? WHERE CANid=? and Param_Text=?''', ((message.data[0])|(message.data[1]<<8), message.timestamp, CANid, "QNH"))
+			memdb.commit()
 		elif CANid == 50:
 			cursor.execute('''UPDATE messages SET Param_Value=?, timestamp=? WHERE CANid=? and Param_Text=?''', ((message.data[0])|(message.data[1]<<8), message.timestamp, CANid, "RPM"))
 			cursor.execute('''UPDATE messages SET Param_Value=?, timestamp=? WHERE CANid=? and Param_Text=?''', ((message.data[2])|(message.data[3]<<8), message.timestamp, CANid, "FuelPressure"))
