@@ -24,7 +24,7 @@ cursor.execute('''PRAGMA journal_mode=WAL''')
 # populate table with known parameters
 
 #Msg. 25 Time broadcast
-
+cursor.execute('''INSERT OR REPLACE  INTO messages(CANid, Param_Text, Param_Value, timestamp) VALUES(?,?,?,?)''', (25, "TimeSync", 0, time.time() ))
 #Msg. 40 from Module A (Air pressure and stuff)
 cursor.execute('''INSERT OR REPLACE  INTO messages(CANid, Param_Text, Param_Value, timestamp) VALUES(?,?,?,?)''', (40, "Airspeed", 0, time.time() ))
 cursor.execute('''INSERT OR REPLACE  INTO messages(CANid, Param_Text, Param_Value, timestamp) VALUES(?,?,?,?)''', (40, "Altitude", 0, time.time() ))
@@ -56,8 +56,8 @@ cursor.execute('''INSERT OR REPLACE  INTO messages(CANid, Param_Text, Param_Valu
 cursor.execute('''INSERT OR REPLACE  INTO messages(CANid, Param_Text, Param_Value, timestamp) VALUES(?,?,?,?)''', (80, "FuelTank1", 0, time.time() ))
 cursor.execute('''INSERT OR REPLACE  INTO messages(CANid, Param_Text, Param_Value, timestamp) VALUES(?,?,?,?)''', (80, "FuelTank2", 0, time.time() ))
 #Msg. 81 Oil Temperature and pressure
-cursor.execute('''INSERT OR REPLACE  INTO messages(CANid, Param_Text, Param_Value, timestamp) VALUES(?,?,?,?)''', (81, "OilTemperature", 0, time.time() ))
 cursor.execute('''INSERT OR REPLACE  INTO messages(CANid, Param_Text, Param_Value, timestamp) VALUES(?,?,?,?)''', (81, "OilPressure", 0, time.time() ))
+cursor.execute('''INSERT OR REPLACE  INTO messages(CANid, Param_Text, Param_Value, timestamp) VALUES(?,?,?,?)''', (81, "OilTemperature", 0, time.time() ))
 #Msg. 82 EGT 1&2 + CHT 1&2
 cursor.execute('''INSERT OR REPLACE  INTO messages(CANid, Param_Text, Param_Value, timestamp) VALUES(?,?,?,?)''', (82, "EGT1", 0, time.time() ))
 cursor.execute('''INSERT OR REPLACE  INTO messages(CANid, Param_Text, Param_Value, timestamp) VALUES(?,?,?,?)''', (82, "EGT2", 0, time.time() ))
@@ -99,7 +99,7 @@ memdb.commit()
 
 print('Bring up CAN0....')
 #os.system("sudo /sbin/ip link set can0 up type can bitrate 500000")
-time.sleep(0.1)	
+time.sleep(0.1)
 
 try:
 	bus = can.interface.Bus(channel='can0', bustype='socketcan_native')
@@ -111,7 +111,7 @@ print('Ready')
 
 try:
 	while True:
-# maybe use  
+# maybe use
 #               for msg in bus:
 #                   print(msg.data)
 # instead
@@ -122,7 +122,10 @@ try:
 #		msg_config = confcur.fetchone()
 #		structure = msg_config[0]
 		CANid=message.arbitration_id
-		if CANid == 40:
+		if CANid == 25:
+			cursor.execute('''UPDATE messages SET Param_Value=?, timestamp=? WHERE CANid=? and Param_Text=?''', ((message.data[0])|(message.data[1]<<8)|(message.data[2]<<16)|(message.data[3]<<32), message.timestamp, CANid, "TimeSync"))
+			memdb.commit()
+		elif CANid == 40:
 			cursor.execute('''UPDATE messages SET Param_Value=?, timestamp=? WHERE CANid=? and Param_Text=?''', ((message.data[0])|(message.data[1]<<8), message.timestamp, CANid, "Airspeed"))
 			cursor.execute('''UPDATE messages SET Param_Value=?, timestamp=? WHERE CANid=? and Param_Text=?''', ((message.data[2])|(message.data[3]<<8)|(message.data[4]<<16), message.timestamp, CANid, "Altitude"))
 			VerticalSpeed = (message.data[5])|(message.data[6]<<8)
@@ -183,8 +186,8 @@ try:
 #			cursor.execute('''UPDATE messages SET Param_Value=?, timestamp=? WHERE CANid=? and Param_Text=?''', ((message.data[2])|(message.data[3]<<8), message.timestamp, CANid, "FuelTank2"))
 			memdb.commit()
 		elif CANid == 81:
-			cursor.execute('''UPDATE messages SET Param_Value=?, timestamp=? WHERE CANid=? and Param_Text=?''', ((message.data[0])|(message.data[1]<<8), message.timestamp, CANid, "OilTemperature"))
-			cursor.execute('''UPDATE messages SET Param_Value=?, timestamp=? WHERE CANid=? and Param_Text=?''', ((message.data[2])|(message.data[3]<<8), message.timestamp, CANid, "OilPressure"))
+			cursor.execute('''UPDATE messages SET Param_Value=?, timestamp=? WHERE CANid=? and Param_Text=?''', ((message.data[0])|(message.data[1]<<8), message.timestamp, CANid, "OilPressure"))
+			cursor.execute('''UPDATE messages SET Param_Value=?, timestamp=? WHERE CANid=? and Param_Text=?''', ((message.data[2])|(message.data[3]<<8), message.timestamp, CANid, "OilTemperature"))
 			memdb.commit()
 		elif CANid == 82:
 			cursor.execute('''UPDATE messages SET Param_Value=?, timestamp=? WHERE CANid=? and Param_Text=?''', ((message.data[0])|(message.data[1]<<8), message.timestamp, CANid, "EGT1"))
