@@ -7,6 +7,9 @@ For details visit http://experimentalavionics.com/can-bus-data-logger/
 
 ## Release Notes: ##
 
+### 2021-07-25 ###
+* Added support for two electric current sensors - Alternator Ampermeter (AmpsAlternator) and  Battery Ampermeter (AmpsBattery)
+
 ### 2021-06-17 ###
 * Bug fix: Incorrect reporting of oil pressure and temperature
 * Bux fix: added reporting of TimeSync events (CAN message 25)

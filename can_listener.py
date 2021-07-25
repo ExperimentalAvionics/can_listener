@@ -75,7 +75,8 @@ cursor.execute('''INSERT OR REPLACE  INTO messages(CANid, Param_Text, Param_Valu
 cursor.execute('''INSERT OR REPLACE  INTO messages(CANid, Param_Text, Param_Value, timestamp) VALUES(?,?,?,?)''', (84, "CHT6", 0, time.time() ))
 #Msg. 85 Electric stuff Voltage and Current
 cursor.execute('''INSERT OR REPLACE  INTO messages(CANid, Param_Text, Param_Value, timestamp) VALUES(?,?,?,?)''', (85, "Volts", 0, time.time() ))
-cursor.execute('''INSERT OR REPLACE  INTO messages(CANid, Param_Text, Param_Value, timestamp) VALUES(?,?,?,?)''', (85, "Amps", 0, time.time() ))
+cursor.execute('''INSERT OR REPLACE  INTO messages(CANid, Param_Text, Param_Value, timestamp) VALUES(?,?,?,?)''', (85, "AmpsAlternator", 0, time.time() ))
+cursor.execute('''INSERT OR REPLACE  INTO messages(CANid, Param_Text, Param_Value, timestamp) VALUES(?,?,?,?)''', (85, "AmpsBattery", 0, time.time() ))
 #Msg. 99 GPS Lat/Lon
 cursor.execute('''INSERT OR REPLACE  INTO messages(CANid, Param_Text, Param_Value, timestamp) VALUES(?,?,?,?)''', (99, "GPS_Lat", 0, time.time() ))
 cursor.execute('''INSERT OR REPLACE  INTO messages(CANid, Param_Text, Param_Value, timestamp) VALUES(?,?,?,?)''', (99, "GPS_Lon", 0, time.time() ))
@@ -209,7 +210,14 @@ try:
 			memdb.commit()
 		elif CANid == 85:
 			cursor.execute('''UPDATE messages SET Param_Value=?, timestamp=? WHERE CANid=? and Param_Text=?''', ((message.data[0])|(message.data[1]<<8), message.timestamp, CANid, "Volts"))
-			cursor.execute('''UPDATE messages SET Param_Value=?, timestamp=? WHERE CANid=? and Param_Text=?''', ((message.data[2])|(message.data[3]<<8), message.timestamp, CANid, "Amps"))
+			AmpsAlternator = (message.data[2])|(message.data[3]<<8)
+			if AmpsAlternator > 32768:
+				AmpsAlternator = AmpsAlternator - 65536
+			cursor.execute('''UPDATE messages SET Param_Value=?, timestamp=? WHERE CANid=? and Param_Text=?''', (AmpsAlternator, message.timestamp, CANid, "AmpsAlternator"))
+			AmpsBattery = (message.data[4])|(message.data[5]<<8)
+			if AmpsBattery > 32768:
+				AmpsBattery = AmpsBattery - 65536
+			cursor.execute('''UPDATE messages SET Param_Value=?, timestamp=? WHERE CANid=? and Param_Text=?''', (AmpsBattery, message.timestamp, CANid, "AmpsBattery"))
 			memdb.commit()
 		elif CANid == 99:
 			Lat = (message.data[0])|(message.data[1]<<8)|(message.data[2]<<16)|(message.data[3]<<24)
