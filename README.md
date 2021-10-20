@@ -7,6 +7,9 @@ For details visit http://experimentalavionics.com/can-bus-data-logger/
 
 ## Release Notes: ##
 
+### 2021-10-20 ###
+* Fixed the bug registeing Outside Air Temperature (OAT) incorrectly.
+
 ### 2021-07-25 ###
 * Added support for two electric current sensors - Alternator Ampermeter (AmpsAlternator) and  Battery Ampermeter (AmpsBattery)
 

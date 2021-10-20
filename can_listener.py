@@ -138,7 +138,11 @@ try:
 			cursor.execute('''UPDATE messages SET Param_Value=?, timestamp=? WHERE CANid=? and Param_Text=?''', ((message.data[0])|(message.data[1]<<8),  message.timestamp, CANid, "AoA"))
 			memdb.commit()
 		elif CANid == 42:
-			cursor.execute('''UPDATE messages SET Param_Value=?, timestamp=? WHERE CANid=? and Param_Text=?''', ((message.data[0])|(message.data[1]<<8), message.timestamp, CANid, "OAT"))
+			OAT = (message.data[0])|(message.data[1]<<8)
+			if OAT > 32768:
+				OAT = OAT - 65536
+			OAT = OAT/10
+			cursor.execute('''UPDATE messages SET Param_Value=?, timestamp=? WHERE CANid=? and Param_Text=?''', (OAT, message.timestamp, CANid, "OAT"))
 			cursor.execute('''UPDATE messages SET Param_Value=?, timestamp=? WHERE CANid=? and Param_Text=?''', (message.data[2], message.timestamp, CANid, "Humidity"))
 			memdb.commit()
 		elif CANid == 43:
